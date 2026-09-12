@@ -1,0 +1,13 @@
+[00:00] Deepanshu: Okay, quick growth sync. Thirty minutes. Priya, start with the activation numbers.
+[00:41] Priya: Activation is up 18% week over week, but the interesting part is why - we changed nothing in onboarding. The lift came from the new template gallery.
+[01:12] Priya: Users who start from a template activate at 2.4x the rate of users who start blank. Blank-canvas is where motivation goes to die.
+[02:05] Marcus: That matches what we saw at my last company. The product tour was a rounding error; the template was the product.
+[02:48] Deepanshu: So the decision: we double the gallery. Twenty templates by end of month, each one seeded by a real user workflow, not invented by us.
+[03:30] Marcus: Off the record - the Q3 pricing experiment with Acme Corp stays internal until legal clears it. Confidential, do not share outside this room.
+[04:15] Priya: Second thing. Churn interviews came back. The number one reason people leave is not price and not features. They say "I never formed the habit."
+[05:02] Priya: Users who create a second artifact within 48 hours retain at 71%. Users who don't retain at 19%. That gap is the whole business.
+[06:20] Deepanshu: Write that down as the headline. The first 48 hours decide everything; everything we ship next quarter either serves that window or gets cut.
+[07:45] Marcus: One more data point. Our best organic channel is not SEO anymore. It's screenshots. Users screenshot their output and share it, and those shares convert at 9x our paid social.
+[09:10] Deepanshu: Then we make the output more screenshot-able. Watermark-free, beautiful by default. Marketing budget shifts thirty percent toward that.
+[10:05] Priya: To be clear on the risk: if we get this wrong we burn the quarter on aesthetics. I want the screenshot-share metric instrumented before we move budget.
+[11:30] Deepanshu: Agreed. Instrument first, move money second. Meeting adjourned - someone turn the 48-hour thing into a post before Friday.

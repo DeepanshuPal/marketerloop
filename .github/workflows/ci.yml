@@ -1,0 +1,22 @@
+# CI and evals only. GitHub Actions is deliberately NOT the production
+# scheduler for marketerloop templates: scheduled jobs can be delayed or
+# dropped under load and are auto-disabled after 60 days of repo inactivity.
+# Time-sensitive schedules belong to the always-on worker (docker compose).
+name: ci
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -r requirements.txt
+      - run: MOCK_LLM=1 pytest -q
+      - name: template evals (deterministic, no keys)
+        run: MOCK_LLM=1 python templates/meeting-to-content/evals/eval.py

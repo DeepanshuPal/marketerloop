@@ -1,0 +1,52 @@
+# A template is a folder. This file is the contract: the runner reads it and
+# nothing else. No visual builder, no hidden behavior.
+id: meeting-to-content
+version: 0.1.0
+name: Meeting to Content
+description: >-
+  Turn meeting notes and transcripts into ready-to-post drafts
+  (LinkedIn post, X thread, newsletter blurb). Every draft waits for a human;
+  every accepted edit teaches the next draft your taste.
+
+inputs:
+  - connector: manual          # paste / file upload. The free on-ramp.
+    required: false
+  - connector: granola         # Granola public API (docs.granola.ai)
+    required: false
+    scopes: [notes:read, transcripts:read]
+    requires_key: GRANOLA_API_KEY
+    tier: premium              # Granola API keys require a Business plan
+    poll: false                # v0: on-demand note pick, not a scheduled pull
+
+trigger: manual
+
+dag:
+  - id: ingest
+    kind: deterministic
+  - id: extract_ideas
+    kind: llm
+    prompt: prompts/extract_ideas.v1.md
+  - id: score
+    kind: deterministic
+  - id: draft
+    kind: llm
+    for_each: format
+    prompts:
+      linkedin_post: prompts/draft_linkedin_post.v1.md
+      x_thread: prompts/draft_x_thread.v1.md
+      newsletter_blurb: prompts/draft_newsletter_blurb.v1.md
+
+approval:
+  required: true               # nothing leaves the queue without a human
+  formats: [linkedin_post, x_thread, newsletter_blurb]
+  learn_from_edits: true       # accepted edits become few-shot examples
+
+budgets:
+  weekly_llm_usd: 5.00         # enforced before every LLM call
+  max_runs_per_day: 20
+  cooldown_minutes_between_runs: 0
+
+state:
+  runs: append-only            # evidence + prompt/model versions + cost
+  drafts: [pending, approved, edited, rejected]
+  outcomes: tracked            # posted URL, metrics, removal checks (day one)

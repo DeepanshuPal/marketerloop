@@ -1,0 +1,10 @@
+{
+  "must_contain_any": [
+    ["2.4x", "template"],
+    ["48 hours", "48-hour"],
+    ["71%", "19%"],
+    ["screenshot", "9x"]
+  ],
+  "confidential_must_be_flagged": ["pricing experiment", "Acme Corp"],
+  "min_ideas": 4
+}
