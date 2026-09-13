@@ -17,6 +17,7 @@ jobs:
         with:
           python-version: "3.11"
       - run: pip install -r requirements.txt
+      - run: pip install -e .
       - run: MOCK_LLM=1 pytest -q
       - name: template evals (deterministic, no keys)
         run: MOCK_LLM=1 python templates/meeting-to-content/evals/eval.py
