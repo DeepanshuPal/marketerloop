@@ -1,116 +1,108 @@
 # marketerloop
 
-Marketer-in-the-loop agentic workflows. Open source, BYOK, and every output
-waits for a human before it goes anywhere.
+Marketer-in-the-loop agentic workflows. Open source, BYOK, and every output waits for a human before it goes anywhere.
 
-A template turns a source (meeting notes today, intent signals next) into
-drafts. You approve, edit, or reject every one - and **your edits become the
-few-shot examples for the next draft**, so the tenth draft sounds like you
-wrote it. That's the loop.
-
-This is a CLI, not a platform. Clone it, add your keys, run it on your own
-machine. Your keys, your data, your SQLite file.
+A workflow turns a source signal into drafts, then puts every external write behind review. Accepted edits become few-shot examples for later drafts. The runtime and catalog live here. This is the parent project, not the name of one template.
 
 ```bash
 git clone https://github.com/DeepanshuPal/marketerloop
 cd marketerloop
-pip install -e .            # or: pip install -r requirements.txt and use python -m marketerloop.cli
-cp .env.example .env        # add one LLM key - or don't, mock mode works
+pip install -e .
+cp .env.example .env
 
 marketerloop run meeting-to-content --sample
 marketerloop queue
 marketerloop show <draft-id>
-marketerloop edit <draft-id>   # opens your $EDITOR; the diff teaches the loop
+marketerloop edit <draft-id>
 ```
 
-## How people use it
+## The shared runtime
+
+The common path is deliberately small and inspectable:
 
 ```
-you                          marketerloop (your machine)
- |                                |
- |-- paste transcript ----------->|  marketerloop run meeting-to-content --file sync.txt
- |                                |     ingest -> extract_ideas -> score -> draft x3
- |                                |     (evidence, prompt versions, tokens, cost -> SQLite)
- |<-- 3 drafts in the queue ------|  marketerloop queue
- |-- approve / edit / reject ---->|  decisions + diffs stored append-only
- |                                |  accepted edits few-shot the next drafts
- |-- record where it posted ----->|  marketerloop outcome-add <id> --platform x --url ...
+source -> normalize evidence -> qualify/extract -> draft -> approval queue -> outcome
 ```
 
-No hosted tier, no account, nothing phones home. `marketerloop worker` is the
-always-on loop for templates that declare a schedule (none do yet) - and it is
-deliberately not GitHub Actions, which delays or drops scheduled jobs under
-load and disables them after 60 days of repo inactivity.
+- Templates are folders with a readable `template.yaml`, versioned prompts and offline evals.
+- Runs, source evidence, prompt/model versions, costs, decisions, edit diffs and outcomes are append-only in local SQLite.
+- API keys stay in environment variables. Mock mode runs CI and the sample without keys or cost.
+- Budgets fail closed before model calls.
+- Nothing posts, sends or touches a social account automatically.
 
-## Templates are folders
+There is no visual builder and no hosted account. Clone it, bring your own keys, and keep your data in your own SQLite file.
+
+## Workflow catalog
+
+Templates that fit the shared runner stay as folders. Specialized workflows ship as focused repos while their interfaces settle, but they are catalog entries under Marketerloop, not separate product bets.
+
+| workflow | status | what it does |
+|---|---|---|
+| [`meeting-to-content`](templates/meeting-to-content) | native template | Transcript or notes -> timestamped ideas -> LinkedIn post, X thread and newsletter blurb -> approval queue. Confidential lines are flagged and excluded. |
+| [`fresh-intent-reply-queue`](https://github.com/DeepanshuPal/fresh-intent-reply-queue) | standalone workflow | Reddit RSS + HN intent signals -> ICP match -> scored reply drafts -> human approval. |
+| [`linkedin-visitor-conversion`](https://github.com/DeepanshuPal/linkedin-visitor-conversion) | standalone workflow | Manual LinkedIn visitor/follower CSV -> ICP qualification -> connection-note drafts -> human approval and export. |
+
+All three share the same operating rules: local state, BYOK models, append-only run evidence, explicit budgets, and no external write without human approval. As their contracts stabilize, they can move behind the common runner without breaking their focused CLIs.
+
+## Native template contract
 
 ```
 templates/meeting-to-content/
-  template.yaml      inputs, connector scopes, trigger, DAG, approval gates, budgets, state
-  prompts/*.v1.md    versioned prompts (the version lands on every draft it produced)
-  evals/             fixtures + assertions, run in CI with no keys (MOCK_LLM=1)
+  template.yaml
+  prompts/*.v1.md
+  evals/
   README.md
 ```
 
-The runner reads `template.yaml` and nothing else. There is no visual builder
-and no hidden behavior; a template you can read in one sitting is the point.
-Shipped today:
+`template.yaml` declares inputs, connector scopes, trigger, DAG, approval gates, budgets and state. The runner reads that contract. There is no hidden workflow behavior.
 
-| template | what it does |
-|---|---|
-| `meeting-to-content` | transcript/notes -> timestamped idea extraction -> LinkedIn post, X thread, newsletter blurb -> approval queue. Confidential lines are flagged and never drafted from. |
-
-Coming next: `fresh-intent-reply-queue` (Reddit/HN signals -> matched to your
-ICP -> reply drafts, same queue, same learning loop).
+The meeting-to-content template accepts a transcript through manual paste, a file or stdin, or from Granola. It extracts timestamped ideas, excludes confidential material, and drafts three formats: LinkedIn post, X thread and newsletter blurb. Every draft stops in the queue.
 
 ## Connectors
 
-A connector normalizes a source into a timestamped transcript and gets out of
-the way. No key = not configured, never an error.
-
 | connector | status | cost |
 |---|---|---|
-| manual paste/upload | ✅ live | free - works with any meeting tool's export |
-| Granola | ✅ live (built against the [public API docs](https://docs.granola.ai)) | needs a Granola **Business** plan key (Settings -> Connectors -> API keys) |
-| Firecrawl | 🔜 stub | free tier exists |
-| Spider Cloud | 🔜 stub | free tier exists |
-| Browserbase | 🔜 stub | paid - logged-in capture |
-| Exa | 🔜 stub | paid - quality pick for discovery |
+| manual paste/file/stdin | live and verified | free |
+| Granola | implemented against the public API docs; live account path not verified | Business-plan API key required |
+| Firecrawl | interface stub | free tier exists |
+| Spider Cloud | interface stub | free tier exists |
+| Browserbase | interface stub | paid |
+| Exa | interface stub | paid |
 
-Stubs are exactly that: registered interfaces with docs links, so the pattern
-is visible and PRs have somewhere to land.
+A missing connector key means “not configured”, not a broken run. Stubs are labelled as stubs so the architecture is visible without pretending unfinished integrations work.
 
-## BYOK
+## Models and keys
 
-Bring your own keys; the tool is free, your usage is yours. One OpenRouter key
-covers every model, or use provider keys directly.
+One OpenRouter key can route all model calls, or use OpenAI or Anthropic directly.
 
-| env var | what for |
+| env var | purpose |
 |---|---|
-| `OPENROUTER_API_KEY` | recommended: one key, any model (`MARKETERLOOP_MODEL`, default `openrouter/anthropic/claude-sonnet-4.5`) |
-| `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` | direct provider instead |
-| `GRANOLA_API_KEY` | Granola connector (Business plan) |
-| `MOCK_LLM=1` | deterministic local mode, no key, no cost - how CI and evals run |
+| `OPENROUTER_API_KEY` | recommended model router |
+| `OPENAI_API_KEY` / `ANTHROPIC_API_KEY` | direct provider keys |
+| `GRANOLA_API_KEY` | Granola Business API |
+| `MOCK_LLM=1` | deterministic local mode used by CI and evals |
 
-Budgets are enforced in `template.yaml` (`weekly_llm_usd`, `max_runs_per_day`).
-A run that would exceed the cap fails loudly with a `budget_exceeded` event,
-and `marketerloop budgets` shows the 7-day spend.
+The default model is configurable with `MARKETERLOOP_MODEL`. Limits are declared in the template (`weekly_llm_usd`, `max_runs_per_day`) and checked before calls.
 
-## The records are the product
-
-Every run stores, append-only: the raw evidence (hash + text), which prompt
-and model versions produced which draft, tokens and cost, every human
-decision (approve / reject+reason / edit+diff), and outcomes - where approved
-drafts got posted, their metrics, and whether they were later removed. SQL,
-one file, yours: `./data/marketerloop.db`. Query it with anything.
-
-## Develop
+## Verification
 
 ```bash
 pip install -e ".[dev]"
 MOCK_LLM=1 pytest -q
 MOCK_LLM=1 python templates/meeting-to-content/evals/eval.py
+MOCK_LLM=1 marketerloop run meeting-to-content --sample
+marketerloop queue
 ```
 
-Python 3.11+ recommended (3.10 works in mock mode; LiteLLM needs 3.11).
-MIT licensed.
+The suite covers the pipeline, approval state, template loading and CLI. The offline eval checks extraction, evidence coverage, confidentiality exclusions and all three draft formats. Granola still needs a real Business-plan key for a true live connector test; the README will not call that verified until it is.
+
+## Develop
+
+```bash
+marketerloop templates list
+marketerloop connectors
+marketerloop runs
+marketerloop budgets
+```
+
+Python 3.11+ is recommended; mock mode works on 3.10. MIT licensed.
