@@ -41,6 +41,7 @@ Templates that fit the shared runner stay as folders. Specialized workflows ship
 | [`meeting-to-content`](templates/meeting-to-content) | native template | Transcript or notes -> timestamped ideas -> LinkedIn post, X thread and newsletter blurb -> approval queue. Confidential lines are flagged and excluded. |
 | [`fresh-intent-reply-queue`](https://github.com/DeepanshuPal/fresh-intent-reply-queue) | standalone workflow | Reddit RSS + HN intent signals -> ICP match -> scored reply drafts -> human approval. |
 | [`linkedin-visitor-conversion`](https://github.com/DeepanshuPal/linkedin-visitor-conversion) | standalone workflow | Manual LinkedIn visitor/follower CSV -> ICP qualification -> connection-note drafts -> human approval and export. |
+| `citation-queue` ([spec](docs/specs/citation-queue.md)) | spec, not built | [am-i-cited](https://github.com/DeepanshuPal/am-i-cited) citation feed -> durable cited threads -> participation drafts -> human approval. The durable-signal companion to fresh intent. |
 
 All three share the same operating rules: local state, BYOK models, append-only run evidence, explicit budgets, and no external write without human approval. As their contracts stabilize, they can move behind the common runner without breaking their focused CLIs.
 
